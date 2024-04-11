@@ -1,5 +1,7 @@
 package com.example.networkapp
 
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
@@ -26,10 +28,13 @@ class MainActivity : AppCompatActivity() {
     lateinit var numberEditText: EditText
     lateinit var showButton: Button
     lateinit var comicImageView: ImageView
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        sharedPreferences = getSharedPreferences("ComicData", Context.MODE_PRIVATE)
 
         requestQueue = Volley.newRequestQueue(this)
         titleTextView = findViewById(R.id.comicTitleTextView)
@@ -37,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         numberEditText = findViewById(R.id.comicNumberEditText)
         showButton = findViewById(R.id.showComicButton)
         comicImageView = findViewById(R.id.comicImageView)
+
+        loadComicData()
 
         showButton.setOnClickListener {
             val comicId = numberEditText.text.toString()
@@ -49,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun downloadComic (comicId: String) {
+        saveComicData(comicId)
         val url = "https://xkcd.com/$comicId/info.0.json"
         requestQueue.add (
             JsonObjectRequest(url, {showComic(it)}, {
@@ -62,5 +70,14 @@ class MainActivity : AppCompatActivity() {
         Picasso.get().load(comicObject.getString("img")).into(comicImageView)
     }
 
+    private fun saveComicData(comicId: String) {
+        with(sharedPreferences.edit()) {
+            putString("comic_id", comicId)
+            apply()
+        }
+    }
 
+    private fun loadComicData() {
+        sharedPreferences.getString("comic_id", "")?.let { downloadComic(it) }
+    }
 }
